@@ -34,3 +34,7 @@ anchor/node_modules/
 # Misc
 *.log
 npm-debug.log*
+
+.vercel
+node_modules
+.next
