@@ -57,7 +57,7 @@ side of bootstrap is invisible to anyone without the service role key.
 |---|---|---|---|---|
 | §6 epochs | 4h epoch tick → distribute pool → record `epoch_rewards` per wallet | not in kai68 | not in repo (the StepN-style mining_engine + epoch_scheduler from `oyster/specs/sight-token-phase0/` is a **separate** Lane B project, unrelated to this repo) | ⚠️ ALPHA-OK — banner is honest about "no real value moves" |
 | §6 reward claim | Wallet calls `/claim` → backend signs SPL transfer → tx hash returned | not implemented | mock-data path only | ⚠️ ALPHA-OK |
-| §7 simulated slot admin | Admin UI behind service-role auth to add/remove simulated stakes | `src/app/admin/` shell exists | shell only — no real auth gate yet | 🚨 if `/admin` is exposed publicly. **Mitigation**: confirm Vercel project does not have `/admin` reachable, or add a Vercel firewall rule. (See Action item 3 below.) |
+| §7 simulated slot admin | Admin UI behind service-role auth to add/remove simulated stakes | `src/app/admin/` shell exists | ✅ env-flagged route gate: returns 404 unless `NEXT_PUBLIC_ADMIN_ENABLED=true` is set on the deploy. Phase-2: replace with wallet-sig auth. | ⚠️ ALPHA-OK — gate is silent (404, not 401) so route existence isn't leaked |
 | §8 Mint flow | Wallet → bonding curve price → SPL pay → NFT mint via Candy Machine v3 | UI + signature flow scaffolded | mock-data path only | ⚠️ ALPHA-OK |
 | §9 staking | Stake NFT to a node, 12h cooldown to unstake, capped at 20/node | UI scaffolded | mock-data path only | ⚠️ ALPHA-OK |
 
@@ -110,9 +110,9 @@ project that gates Phase 1 (T+3-7d) when glasses ship and T1 mint opens.
 4. Confirm the alpha banner is visible on the production URL.
 
 ### Before sharing the URL widely (next 30 minutes)
-5. Verify `/admin` is either gated by service-role auth or 404'd at the edge (Vercel project setting).
-6. Verify `NEXT_PUBLIC_SUPABASE_ANON_KEY` in the deployed env is the **anon** key, not the **service role** key (a bundled service-role key would defeat all of this).
-7. Confirm the 4 admin columns we revoked are still readable via the service-role key from the admin shell — i.e. we locked down anon, not ourselves.
+5. ✅ `/admin` is now env-gated. Returns 404 unless deploy sets `NEXT_PUBLIC_ADMIN_ENABLED=true`. To re-enable for an authorized dev preview: add the env var on the Vercel project (or in `.env.local` for local).
+6. Verify `NEXT_PUBLIC_SUPABASE_ANON_KEY` in the deployed env is the **anon** key, not the **service role** key (a bundled service-role key would defeat all of this). Howard owns this — check Vercel project Settings → Environment Variables.
+7. Confirm the 4 admin columns we revoked are still readable via the service-role key from the admin shell — i.e. we locked down anon, not ourselves. Smoke-test: with `NEXT_PUBLIC_ADMIN_ENABLED=true` and a service-role client, `fetchAdminNodes()` should return rows including `simulated_slots`.
 
 ### Before mainnet / "real money" launch (Phase 2)
 8. Deploy Anchor program → add `claim` instruction → add T3 reconciliation worker → add T4 ATA check.

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { notFound } from "next/navigation";
 import {
   fetchNetworkStats,
   updateSimulatedSlots,
@@ -14,7 +15,30 @@ import {
 } from "@/lib/supabase/admin-api";
 import { BONDING_TIERS } from "@/lib/mock-data";
 
+/**
+ * Alpha-period admin gate.
+ *
+ * The data layer (migration 002) already revokes anon SELECT on raw
+ * `nodes` / `nft_passes`, so an anon visitor reaching this route would
+ * see an empty UI. That's safe but unprofessional — and one screenshot
+ * away from a "their admin panel is open" thread.
+ *
+ * This route gate makes /admin return a real 404 to anyone whose deploy
+ * doesn't explicitly set NEXT_PUBLIC_ADMIN_ENABLED=true. Local dev keeps
+ * working: just `NEXT_PUBLIC_ADMIN_ENABLED=true` in your .env.local.
+ *
+ * Phase-2 replacement: wallet-signature or NextAuth session check.
+ * See GAPS.md §5 action item 5.
+ */
+const ADMIN_ENABLED = process.env.NEXT_PUBLIC_ADMIN_ENABLED === "true";
+
 export default function AdminPage() {
+  if (!ADMIN_ENABLED) {
+    // Renders the framework 404 page. Anon visitors can't tell whether
+    // /admin exists at all — silent default.
+    notFound();
+  }
+
   const [stats, setStats] = useState<NetworkStats | null>(null);
   const [nodes, setNodes] = useState<AdminNodeRow[]>([]);
   const [nfts, setNfts] = useState<AdminNftRow[]>([]);
