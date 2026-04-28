@@ -203,25 +203,6 @@ export async function recordNftMint(nft: {
   return data;
 }
 
-// ── Admin: Add/Remove Simulated Stakes ────────────────────
-export async function updateSimulatedSlots(
-  nodeId: string,
-  simulatedSlots: number,
-  usedSlots: number
-) {
-  if (!isSupabaseConnected) {
-    console.log("[Mock] Updated simulated slots:", { nodeId, simulatedSlots, usedSlots });
-    return;
-  }
-
-  const { error } = await supabase
-    .from("nodes")
-    .update({ simulated_slots: simulatedSlots, used_slots: usedSlots })
-    .eq("id", nodeId);
-
-  if (error) throw error;
-}
-
 // ── Reward Claims for a wallet ────────────────────────────
 export async function fetchRewardClaims(wallet: string) {
   if (!isSupabaseConnected) {

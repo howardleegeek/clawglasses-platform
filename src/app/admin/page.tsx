@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 import { notFound } from "next/navigation";
 import {
   fetchNetworkStats,
-  updateSimulatedSlots,
   type NetworkStats,
 } from "@/lib/supabase/api";
 import {
   fetchAdminNodes,
   fetchAdminNftPasses,
+  updateSimulatedSlots,
   type AdminNodeRow,
   type AdminNftRow,
 } from "@/lib/supabase/admin-api";

@@ -40,18 +40,27 @@ if [ -n "$SOURCE_LEAKS" ]; then
   exit 1
 fi
 
-# 2. Built-bundle leak — `is_simulated` or "simulated" in any non-admin chunk.
+# 2. Built-bundle leak — admin column names in any non-admin chunk.
 #    Only runs if .next/ exists.
+#
+# Regex covers BOTH quoted and bare keys:
+#   "simulated_slots"  → quoted JSON form
+#   simulated_slots:   → minified bare key (what agent-3's Playwright caught)
+#   .simulated_slots   → property access in minified code
+# Same patterns for is_simulated.
 if [ -d .next/static/chunks ]; then
   BAD_CHUNKS=$(
-    grep -lE 'is_simulated|"simulated_slots"' .next/static/chunks/*.js 2>/dev/null \
+    grep -RlE 'is_simulated|simulated_slots' .next/static/chunks/ 2>/dev/null \
     | grep -vE 'app/admin/' \
     || true
   )
   if [ -n "$BAD_CHUNKS" ]; then
-    echo "BLOCKED — simulated/is_simulated leaked into a non-admin chunk:"
+    echo "BLOCKED — simulated_slots / is_simulated leaked into a non-admin chunk:"
     echo "$BAD_CHUNKS"
-    echo "These chunks ship to every visitor. Remove the leak source and rebuild."
+    echo
+    echo "These chunks ship to every visitor. Move the leak source into an"
+    echo "admin-perimeter file (src/lib/supabase/admin-api.ts or src/app/admin/)"
+    echo "so it only ships to the /admin route."
     exit 1
   fi
 fi

@@ -123,3 +123,30 @@ export async function fetchAdminNftPasses(wallet?: string): Promise<AdminNftRow[
   }
   return data || [];
 }
+
+// ── Admin: Add/Remove Simulated Stakes ────────────────────
+// Lives in admin-api (not the public api) so the function body — which
+// references the admin column name `simulated_slots` — does not get
+// bundled into chunks loaded by public routes. Agent-3's Playwright
+// no-leak.spec.ts caught this: minified bundle contained
+// `update({simulated_slots:e,used_slots:s})` from the public api path.
+export async function updateSimulatedSlots(
+  nodeId: string,
+  simulatedSlots: number,
+  usedSlots: number
+) {
+  if (!isSupabaseConnected) {
+    console.warn("[admin-api] mock updateSimulatedSlots:", { nodeId, simulatedSlots, usedSlots });
+    return;
+  }
+
+  const { error } = await supabase
+    .from("nodes")
+    .update({ simulated_slots: simulatedSlots, used_slots: usedSlots })
+    .eq("id", nodeId);
+
+  if (error) {
+    console.warn("[admin-api] updateSimulatedSlots failed (expected without service-role):", error.message);
+    throw error;
+  }
+}
