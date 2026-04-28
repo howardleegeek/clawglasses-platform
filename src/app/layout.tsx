@@ -1,3 +1,14 @@
+// SEO + Open Graph metadata.
+//
+// NOTE: This metadata references /og-image.png (1200x630). That asset is NOT
+// yet committed to /public — it must be added separately for previews on
+// Twitter / iMessage / LinkedIn / Slack to render with a real image. Until
+// then social platforms will fall back to a text-only card. Do NOT generate
+// a placeholder; ship the real asset when design hands it off.
+//
+// metadataBase resolves relative OG URLs in production. Set
+// NEXT_PUBLIC_SITE_URL on Vercel (e.g. https://clawglasses.com) to override
+// the default. Without it, Next emits a build warning and previews still work.
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -6,10 +17,72 @@ import { Navbar } from "@/components/Navbar";
 
 const inter = Inter({ subsets: ["latin"] });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://clawglasses.com";
+const SITE_NAME = "Clawglasses";
+const SITE_DESCRIPTION =
+  "Clawglasses are AI-powered smart glasses that double as Proof-of-Sight DePIN mining nodes. Wear them, power the network, and earn $SIGHT rewards every hour.";
+const OG_IMAGE = "/og-image.png";
+
 export const metadata: Metadata = {
-  title: "Clawglasses — AI Smart Glasses × DePIN Network",
-  description:
-    "Mine $SIGHT rewards by powering the Proof-of-Sight network with Clawglasses AI smart glasses.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Clawglasses — AI Smart Glasses x DePIN Network",
+    template: "%s — Clawglasses",
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: [
+    "Clawglasses",
+    "AI smart glasses",
+    "DePIN",
+    "Proof of Sight",
+    "$SIGHT",
+    "Solana",
+    "smart glasses mining",
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
+  openGraph: {
+    type: "website",
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    title: "Clawglasses — AI Smart Glasses x DePIN Network",
+    description: SITE_DESCRIPTION,
+    locale: "en_US",
+    images: [
+      {
+        url: OG_IMAGE,
+        width: 1200,
+        height: 630,
+        alt: "Clawglasses — Proof-of-Sight DePIN network",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Clawglasses — AI Smart Glasses x DePIN Network",
+    description: SITE_DESCRIPTION,
+    images: [OG_IMAGE],
+    creator: "@ClawGlasses",
+    site: "@ClawGlasses",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
 };
 
 export default function RootLayout({
