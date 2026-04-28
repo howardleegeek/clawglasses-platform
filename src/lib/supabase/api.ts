@@ -62,7 +62,9 @@ export async function fetchNetworkStats(): Promise<NetworkStats> {
       totalSlots: m.totalSlots,
       usedSlots: m.usedSlots,
       freeSlots: m.freeSlots,
-      simulatedSlots: m.simulatedSlots,
+      // mock surface is also public-safe: never surface admin sim count here.
+      // Admin reads via fetchAdminNodes() and computes its own sum.
+      simulatedSlots: 0,
       totalNFTs: m.totalNFTs,
       stakedNFTs: m.stakedNFTs,
       nftSlotRatio: m.nftSlotRatio,

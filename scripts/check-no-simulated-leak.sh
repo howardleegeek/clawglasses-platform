@@ -19,7 +19,7 @@
 
 set -euo pipefail
 
-ALLOWED_PATHS_REGEX='^(src/lib/supabase/types\.ts|src/lib/supabase/api\.ts|src/app/admin/|supabase/(migrations|functions)/|anchor/|MERGE-NOTES\.md|docs/MIGRATION-v8\.1-to-PRD-v4\.md|SECURITY\.md|scripts/check-no-simulated-leak\.sh)'
+ALLOWED_PATHS_REGEX='^(src/lib/supabase/types\.ts|src/lib/supabase/api\.ts|src/lib/supabase/admin-api\.ts|src/app/admin/|supabase/(migrations|functions)/|anchor/|MERGE-NOTES\.md|docs/MIGRATION-v8\.1-to-PRD-v4\.md|SECURITY\.md|scripts/check-no-simulated-leak\.sh|GAPS\.md)'
 
 # 1. Source-tree leak — `is_simulated` outside the admin perimeter.
 SOURCE_LEAKS=$(

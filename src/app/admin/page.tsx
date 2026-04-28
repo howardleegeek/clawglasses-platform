@@ -3,19 +3,21 @@
 import { useEffect, useState } from "react";
 import {
   fetchNetworkStats,
-  fetchNodes,
-  fetchNftPasses,
   updateSimulatedSlots,
   type NetworkStats,
-  type NodeRow,
-  type NftRow,
 } from "@/lib/supabase/api";
+import {
+  fetchAdminNodes,
+  fetchAdminNftPasses,
+  type AdminNodeRow,
+  type AdminNftRow,
+} from "@/lib/supabase/admin-api";
 import { BONDING_TIERS } from "@/lib/mock-data";
 
 export default function AdminPage() {
   const [stats, setStats] = useState<NetworkStats | null>(null);
-  const [nodes, setNodes] = useState<NodeRow[]>([]);
-  const [nfts, setNfts] = useState<NftRow[]>([]);
+  const [nodes, setNodes] = useState<AdminNodeRow[]>([]);
+  const [nfts, setNfts] = useState<AdminNftRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLog, setActionLog] = useState<string[]>([]);
   const [selectedNode, setSelectedNode] = useState<string>("");
@@ -27,8 +29,8 @@ export default function AdminPage() {
   async function refresh() {
     const [s, n, nf] = await Promise.all([
       fetchNetworkStats(),
-      fetchNodes(),
-      fetchNftPasses(),
+      fetchAdminNodes(),
+      fetchAdminNftPasses(),
     ]);
     setStats(s);
     setNodes(n);

@@ -17,11 +17,23 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
     []
   );
 
+  // TODO(phase-2): drop these casts once @solana/wallet-adapter-react publishes
+  // types compatible with @types/react 18.3+. See:
+  // https://github.com/anza-xyz/wallet-adapter/issues/2341
+  // The runtime contract is unchanged; this is purely a .d.ts version skew.
+  const CP = ConnectionProvider as unknown as FC<{ endpoint: string; children: ReactNode }>;
+  const SWP = SolanaWalletProvider as unknown as FC<{
+    wallets: typeof wallets;
+    autoConnect?: boolean;
+    children: ReactNode;
+  }>;
+  const WMP = WalletModalProvider as unknown as FC<{ children: ReactNode }>;
+
   return (
-    <ConnectionProvider endpoint={RPC_ENDPOINT}>
-      <SolanaWalletProvider wallets={wallets} autoConnect>
-        <WalletModalProvider>{children}</WalletModalProvider>
-      </SolanaWalletProvider>
-    </ConnectionProvider>
+    <CP endpoint={RPC_ENDPOINT}>
+      <SWP wallets={wallets} autoConnect>
+        <WMP>{children}</WMP>
+      </SWP>
+    </CP>
   );
 };

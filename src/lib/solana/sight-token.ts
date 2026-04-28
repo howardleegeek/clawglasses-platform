@@ -16,11 +16,17 @@ export const SIGHT_DECIMALS = 9;
 /**
  * $SIGHT mint address.
  * On devnet, deploy a test token and set this env var.
- * Falls back to a placeholder — the app will show 0 balance until configured.
+ *
+ * Falls back to the Solana System Program address (32 ones), which is:
+ *   - valid base58 (so `new PublicKey(...)` doesn't throw at module load),
+ *   - not a real SPL token mint (so balance queries fail gracefully → 0),
+ *   - recognizably fake to anyone reading on-chain logs.
+ *
+ * The previous "SIGHTxxxx...x1" placeholder contained lowercase 'x' which
+ * is NOT a valid base58 character; that crashed prerender at build time.
  */
 export const SIGHT_MINT = new PublicKey(
-  process.env.NEXT_PUBLIC_SIGHT_MINT ||
-    "SIGHTxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx1" // placeholder — replace after token deploy
+  process.env.NEXT_PUBLIC_SIGHT_MINT || "11111111111111111111111111111111"
 );
 
 /**
