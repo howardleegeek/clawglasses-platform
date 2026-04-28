@@ -1,0 +1,45 @@
+[project]
+id = ""  # Fill in after `supabase link`
+
+[api]
+port = 54321
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 15
+
+[studio]
+port = 54323
+
+[auth]
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://clawglasses.com"]
+
+[auth.email]
+enable_signup = false  # We use wallet-based auth, not email
+
+# Cron jobs (requires pg_cron extension)
+# Run after linking with: supabase db push
+#
+# -- Hourly reward distribution
+# SELECT cron.schedule(
+#   'distribute-rewards',
+#   '0 * * * *',
+#   $$SELECT net.http_post(
+#     url := 'https://<project-ref>.supabase.co/functions/v1/distribute-rewards',
+#     headers := '{"Authorization": "Bearer <service-role-key>"}'::jsonb
+#   )$$
+# );
+#
+# -- Every 5 min: sync chain state + expire old NFTs
+# SELECT cron.schedule(
+#   'sync-chain',
+#   '*/5 * * * *',
+#   $$SELECT net.http_post(
+#     url := 'https://<project-ref>.supabase.co/functions/v1/sync-chain',
+#     headers := '{"Authorization": "Bearer <service-role-key>"}'::jsonb
+#   )$$
+# );
