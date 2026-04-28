@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "security:check": "bash scripts/check-no-simulated-leak.sh"
+    "security:check": "bash scripts/check-no-simulated-leak.sh",
+    "test": "playwright test",
+    "test:install": "playwright install chromium"
   },
   "dependencies": {
     "@solana/spl-token": "^0.4.6",
@@ -23,6 +25,7 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
