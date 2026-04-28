@@ -27,6 +27,10 @@ export interface NetworkStats {
   lastDistribution: string | null;
 }
 
+// PUBLIC-SAFE shapes (no admin columns). Never add `simulated_slots`,
+// `is_simulated`, or any admin-only column here. Admin code uses
+// AdminNodeRow / AdminNftRow via fetchAdminNodes() / fetchAdminNftPasses()
+// which authenticate with the service role.
 export interface NodeRow {
   id: string;
   owner_wallet: string;
@@ -34,7 +38,6 @@ export interface NodeRow {
   status: "live" | "offline";
   total_slots: number;
   used_slots: number;
-  simulated_slots: number;
   registered_at: string;
 }
 
@@ -48,7 +51,6 @@ export interface NftRow {
   expires_at: string;
   staked_on: string | null;
   is_staked: boolean;
-  is_simulated: boolean;
 }
 
 // ── Network Stats ─────────────────────────────────────────
@@ -83,7 +85,7 @@ export async function fetchNetworkStats(): Promise<NetworkStats> {
     totalSlots: data.total_slots,
     usedSlots: data.used_slots,
     freeSlots: data.total_slots - data.used_slots,
-    simulatedSlots: data.simulated_slots,
+    simulatedSlots: 0, // public view never exposes this; admin reads via service role
     totalNFTs: data.total_nfts,
     stakedNFTs: data.staked_nfts,
     nftSlotRatio: ratio,
@@ -94,6 +96,8 @@ export async function fetchNetworkStats(): Promise<NetworkStats> {
 }
 
 // ── Nodes ─────────────────────────────────────────────────
+// Hits the public-safe view `v_nodes_public` (migration 002 strips
+// admin columns). Anon key on raw `nodes` table is revoked.
 export async function fetchNodes(): Promise<NodeRow[]> {
   if (!isSupabaseConnected) {
     return MOCK_NODES.map((n) => ({
@@ -103,13 +107,12 @@ export async function fetchNodes(): Promise<NodeRow[]> {
       status: n.status,
       total_slots: n.total_slots,
       used_slots: n.used_slots,
-      simulated_slots: n.simulated_slots,
       registered_at: n.registered_at,
     }));
   }
 
   const { data, error } = await supabase
-    .from("nodes")
+    .from("v_nodes_public")
     .select("*")
     .order("registered_at", { ascending: false });
 
@@ -118,6 +121,8 @@ export async function fetchNodes(): Promise<NodeRow[]> {
 }
 
 // ── NFT Passes ────────────────────────────────────────────
+// Hits the public-safe view `v_nft_passes_public` (migration 002 strips
+// admin columns). Anon key on raw `nft_passes` table is revoked.
 export async function fetchNftPasses(wallet?: string): Promise<NftRow[]> {
   if (!isSupabaseConnected) {
     let nfts = MOCK_NFTS;
@@ -132,12 +137,11 @@ export async function fetchNftPasses(wallet?: string): Promise<NftRow[]> {
       expires_at: n.expires_at,
       staked_on: n.staked_on_node,
       is_staked: n.staked_on_node !== null,
-      is_simulated: n.is_simulated,
     }));
   }
 
   let query = supabase
-    .from("nft_passes")
+    .from("v_nft_passes_public")
     .select("*")
     .order("minted_at", { ascending: false });
 
