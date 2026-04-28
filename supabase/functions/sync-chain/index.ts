@@ -9,16 +9,30 @@
  *   - Sync NFT pass mints, stakes, unstakes
  *   - Mark expired NFT passes
  *   - Update slot counts
+ *
+ * Public response NEVER exposes `is_simulated` — that's a server-side
+ * routing detail. Defence-in-depth via `_shared/http.ts`.
  */
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.95.3";
+import {
+  Connection,
+  PublicKey,
+} from "https://esm.sh/@solana/web3.js@1.95.3";
+import { jsonResponse, errorResponse } from "../_shared/http.ts";
+import type { NftPassRow, NodeRow, SyncChainResponse } from "../_shared/types.ts";
 
-const RPC_URL = Deno.env.get("SOLANA_RPC_URL") || "https://api.devnet.solana.com";
-const PROGRAM_ID = Deno.env.get("PROGRAM_ID") || "CLAWxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+const RPC_URL =
+  Deno.env.get("SOLANA_RPC_URL") || "https://api.devnet.solana.com";
+const PROGRAM_ID =
+  Deno.env.get("PROGRAM_ID") ||
+  "CLAWxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
 
-serve(async (req) => {
+type ExpiredNftSubset = Pick<NftPassRow, "id" | "staked_on" | "is_staked">;
+type NodeSlotSubset = Pick<NodeRow, "used_slots">;
+
+serve(async (_req: Request): Promise<Response> => {
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -30,11 +44,13 @@ serve(async (req) => {
 
     // ── 1. Expire old NFT passes ──────────────────────────
     const now = new Date().toISOString();
-    const { data: expired } = await supabase
+    const expiredResult = await supabase
       .from("nft_passes")
       .select("id, staked_on, is_staked")
       .eq("is_staked", true)
-      .lt("expires_at", now);
+      .lt("expires_at", now)
+      .returns<ExpiredNftSubset[]>();
+    const expired = expiredResult.data;
 
     if (expired && expired.length > 0) {
       // Unstake expired passes
@@ -46,11 +62,12 @@ serve(async (req) => {
 
         if (nft.staked_on) {
           // Decrement node slot
-          const { data: node } = await supabase
+          const nodeResult = await supabase
             .from("nodes")
             .select("used_slots")
             .eq("id", nft.staked_on)
-            .single();
+            .single<NodeSlotSubset>();
+          const node = nodeResult.data;
 
           if (node) {
             await supabase
@@ -78,19 +95,14 @@ serve(async (req) => {
       // Program may not be deployed yet — that's fine for MVP
     }
 
-    return new Response(
-      JSON.stringify({
-        status: "ok",
-        expired_nfts: expired?.length || 0,
-        synced_accounts: syncedAccounts,
-        timestamp: now,
-      }),
-      { headers: { "Content-Type": "application/json" } }
-    );
+    const body: SyncChainResponse = {
+      status: "ok",
+      expired_nfts: expired?.length ?? 0,
+      synced_accounts: syncedAccounts,
+      timestamp: now,
+    };
+    return jsonResponse(body);
   } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return errorResponse(err);
   }
 });

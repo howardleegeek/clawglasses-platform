@@ -1,4 +1,10 @@
-// Mock data — replace with Supabase queries once backend is connected
+// Mock data — replace with Supabase queries once backend is connected.
+//
+// PUBLIC shapes only. Anything that distinguishes simulated stakes from
+// real ones (sim slot counts, simulated NFT flags, etc.) belongs in
+// `src/app/admin/_admin-mock-data.ts`, NOT here. PRD v4 §4 requires that
+// simulated stakes be indistinguishable from real ones on every public
+// surface — exposing those fields in the public mock module is a leak.
 
 export interface Node {
   id: string;
@@ -7,7 +13,6 @@ export interface Node {
   status: "live" | "offline";
   total_slots: number;
   used_slots: number;
-  simulated_slots: number; // slots occupied by simulated stakes
   registered_at: string;
 }
 
@@ -20,7 +25,6 @@ export interface NFTPass {
   minted_at: string;
   expires_at: string;
   staked_on_node: string | null;
-  is_simulated: boolean;
 }
 
 export interface RewardPool {
@@ -29,7 +33,11 @@ export interface RewardPool {
   last_distribution: string;
 }
 
-// ── Mock Nodes ──
+// ── Mock Nodes (public projection) ──
+//
+// These are the rows the public /nodes page consumes. The simulation
+// derivation lives in `src/app/admin/_admin-mock-data.ts`; this list
+// projects only public columns.
 export const MOCK_NODES: Node[] = Array.from({ length: 12 }, (_, i) => ({
   id: `node-${String(i + 1).padStart(3, "0")}`,
   device_model: i % 3 === 0 ? "WG2" : "WG1",
@@ -37,11 +45,10 @@ export const MOCK_NODES: Node[] = Array.from({ length: 12 }, (_, i) => ({
   status: i < 10 ? "live" : "offline",
   total_slots: 20,
   used_slots: Math.floor(Math.random() * 15),
-  simulated_slots: i < 4 ? Math.floor(Math.random() * 5) + 1 : 0,
   registered_at: new Date(Date.now() - Math.random() * 30 * 86400000).toISOString(),
 }));
 
-// ── Mock NFTs ──
+// ── Mock NFTs (public projection) ──
 export const MOCK_NFTS: NFTPass[] = Array.from({ length: 30 }, (_, i) => {
   const mintedAt = new Date(Date.now() - Math.random() * 20 * 86400000);
   const expiresAt = new Date(mintedAt.getTime() + 30 * 86400000);
@@ -54,7 +61,6 @@ export const MOCK_NFTS: NFTPass[] = Array.from({ length: 30 }, (_, i) => {
     minted_at: mintedAt.toISOString(),
     expires_at: expiresAt.toISOString(),
     staked_on_node: i < 20 ? MOCK_NODES[i % MOCK_NODES.length].id : null,
-    is_simulated: i >= 25,
   };
 });
 
@@ -81,12 +87,15 @@ export function getCurrentTier(totalMinted: number) {
   return BONDING_TIERS[BONDING_TIERS.length - 1];
 }
 
-// ── Aggregate helpers ──
+// ── Aggregate helpers (public view) ──
+//
+// Public network stats. The admin equivalent in
+// `src/app/admin/_admin-mock-data.ts` re-derives the simulation totals
+// using the admin-only node projection.
 export function getNetworkStats() {
   const liveNodes = MOCK_NODES.filter((n) => n.status === "live");
   const totalSlots = liveNodes.reduce((s, n) => s + n.total_slots, 0);
   const usedSlots = liveNodes.reduce((s, n) => s + n.used_slots, 0);
-  const simulatedSlots = liveNodes.reduce((s, n) => s + n.simulated_slots, 0);
   const totalNFTs = MOCK_NFTS.length;
   const stakedNFTs = MOCK_NFTS.filter((n) => n.staked_on_node).length;
   const ratio = totalSlots > 0 ? totalNFTs / totalSlots : 0;
@@ -96,7 +105,6 @@ export function getNetworkStats() {
     totalSlots,
     usedSlots,
     freeSlots: totalSlots - usedSlots,
-    simulatedSlots,
     totalNFTs,
     stakedNFTs,
     nftSlotRatio: ratio,

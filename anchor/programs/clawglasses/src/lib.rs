@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 use anchor_spl::associated_token::AssociatedToken;
 
-declare_id!("CLAWxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
 // ─── Constants ───────────────────────────────────────────────
 const MAX_SLOTS_PER_NODE: u16 = 20;
@@ -291,7 +291,7 @@ pub struct MintNftPass<'info> {
         init,
         payer = buyer,
         space = 8 + NftPass::INIT_SPACE,
-        seeds = [b"nft_pass", &config.total_nfts_minted.to_le_bytes()],
+        seeds = [b"nft_pass", &(config.total_nfts_minted as u64).to_le_bytes()],
         bump,
     )]
     pub nft_pass: Account<'info, NftPass>,

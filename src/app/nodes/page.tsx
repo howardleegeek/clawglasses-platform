@@ -109,7 +109,6 @@ export default function NodesPage() {
               <th className="px-4 py-3">Model</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Slots</th>
-              <th className="px-4 py-3">Simulated</th>
               <th className="px-4 py-3">Owner</th>
             </tr>
           </thead>
@@ -140,9 +139,6 @@ export default function NodesPage() {
                 <td className="px-4 py-3">
                   <span className="text-white/70">{node.used_slots}</span>
                   <span className="text-white/30"> / {node.total_slots}</span>
-                </td>
-                <td className="px-4 py-3 text-white/40">
-                  {node.simulated_slots > 0 ? node.simulated_slots : "—"}
                 </td>
                 <td className="px-4 py-3 font-mono text-xs text-white/40">
                   {node.owner_wallet.slice(0, 8)}…{node.owner_wallet.slice(-4)}
