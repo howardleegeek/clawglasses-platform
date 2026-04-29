@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { WalletButton } from "@/components/WalletButton";
 import { useState } from "react";
 
 const NAV_LINKS = [
@@ -50,7 +50,7 @@ export function Navbar() {
 
         {/* Wallet + mobile toggle */}
         <div className="flex items-center gap-3">
-          <WalletMultiButton />
+          <WalletButton />
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
             className="inline-flex items-center justify-center rounded-lg p-2 text-white/60 hover:bg-white/5 md:hidden"

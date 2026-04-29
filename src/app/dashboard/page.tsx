@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { WalletButton } from "@/components/WalletButton";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { SIGHT_MINT, SIGHT_DECIMALS } from "@/lib/solana/sight-token";
 import { USDC_MINT, USDT_MINT } from "@/lib/constants";
@@ -38,7 +38,7 @@ export default function DashboardPage() {
       <div className="flex min-h-screen flex-col items-center justify-center px-4 text-center">
         <h1 className="text-2xl font-bold mb-3">My Dashboard</h1>
         <p className="text-white/50 mb-6">Connect your wallet to view your NFTs and rewards.</p>
-        <WalletMultiButton />
+        <WalletButton />
       </div>
     );
   }

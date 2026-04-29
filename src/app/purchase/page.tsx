@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { WalletButton } from "@/components/WalletButton";
 import { PRODUCTS, TREASURY_WALLET, USDC_MINT, USDT_MINT } from "@/lib/constants";
 import { buildSPLTransferTx } from "@/lib/solana/transfer-spl";
 import { useSendTransaction } from "@/hooks/useSendTransaction";
@@ -186,7 +186,7 @@ export default function PurchasePage() {
       {!connected ? (
         <div className="text-center">
           <p className="mb-3 text-sm text-white/50">Connect your wallet to purchase</p>
-          <WalletMultiButton />
+          <WalletButton />
         </div>
       ) : (
         <button

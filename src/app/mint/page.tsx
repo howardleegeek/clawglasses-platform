@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { WalletButton } from "@/components/WalletButton";
 import {
   BONDING_TIERS,
   getCurrentTier,
@@ -140,7 +140,7 @@ export default function MintPage() {
         ) : !connected ? (
           <div className="text-center py-4">
             <p className="mb-3 text-sm text-white/50">Connect wallet to mint</p>
-            <WalletMultiButton />
+            <WalletButton />
           </div>
         ) : (
           <>
