@@ -1,15 +1,53 @@
 "use client";
 
-import { FC, ReactNode, useMemo } from "react";
+import { FC, ReactNode, useEffect, useMemo, useState } from "react";
 import {
   ConnectionProvider,
   WalletProvider as SolanaWalletProvider,
 } from "@solana/wallet-adapter-react";
-import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
 import { RPC_ENDPOINT } from "@/lib/constants";
 
 import "@solana/wallet-adapter-react-ui/styles.css";
+
+/**
+ * Lazy-load WalletModalProvider so its chunks (modal UI ~35 kB,
+ * qrcode + adapter glue ~47 kB) load only after first paint.
+ *
+ * Why a manual loader and not next/dynamic:
+ *   next/dynamic's `loading` slot is for spinners, not pass-through —
+ *   it does NOT receive children. Using it would either render blank
+ *   during the chunk fetch (bad UX on a layout that wraps the entire
+ *   wallet-route subtree) or require a Suspense fallback that re-mounts
+ *   children when the promise resolves.
+ *
+ * Behavior:
+ *   - First paint: children render WITHOUT modal context.
+ *     useWalletModal() is only called from event handlers (the wallet
+ *     button click), never during render → the missing context is
+ *     invisible until the user actually clicks.
+ *   - After ~50-200ms: chunk lands, state updates, children re-wrap
+ *     inside the real WalletModalProvider. Wallet connection state
+ *     lives in <SolanaWalletProvider> one level up, so it survives the
+ *     transition. Local component state on wallet routes will refire
+ *     its useEffects, which is harmless (data refetches, no breaking).
+ */
+function LazyWalletModalProvider({ children }: { children: ReactNode }) {
+  const [Mod, setMod] = useState<FC<{ children: ReactNode }> | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    import("@solana/wallet-adapter-react-ui").then((m) => {
+      if (cancelled) return;
+      setMod(
+        () => m.WalletModalProvider as unknown as FC<{ children: ReactNode }>,
+      );
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  return Mod ? <Mod>{children}</Mod> : <>{children}</>;
+}
 
 export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const wallets = useMemo(
@@ -27,12 +65,11 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
     autoConnect?: boolean;
     children: ReactNode;
   }>;
-  const WMP = WalletModalProvider as unknown as FC<{ children: ReactNode }>;
 
   return (
     <CP endpoint={RPC_ENDPOINT}>
       <SWP wallets={wallets} autoConnect>
-        <WMP>{children}</WMP>
+        <LazyWalletModalProvider>{children}</LazyWalletModalProvider>
       </SWP>
     </CP>
   );
