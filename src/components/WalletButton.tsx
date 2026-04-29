@@ -3,11 +3,22 @@
 /**
  * WalletButton — dynamic wrapper around `<WalletMultiButton>`.
  *
- * Why: `@solana/wallet-adapter-react-ui` pulls in the wallet modal,
- * `qrcode.js`, and the picker UI (~30-50 kB gzip on /dashboard, 15-25 kB on
- * /mint and /purchase). None of that is needed until the user actually
- * clicks "Select Wallet". `next/dynamic` with `ssr: false` defers the
- * import until first paint completes, then hydrates in place.
+ * Two-layer deferral:
+ *
+ *   1. Route-level (R1): on routes outside the `(wallet)/` group, the
+ *      `<WalletProvider>` is not in the tree. We detect this via
+ *      `useWalletAvailable()` and render a plain `<Link href="/dashboard">`
+ *      instead. The `next/dynamic` import below is referenced but never
+ *      executed, so the wallet-modal chunk is NOT downloaded on `/` or
+ *      `/nodes`. This is the unlock that makes `/` + `/nodes` shed
+ *      ~50-90 kB of First Load JS.
+ *
+ *   2. Click-level (R2): inside the `(wallet)/` group, `WalletMultiButton`
+ *      is loaded via `next/dynamic` with `ssr: false`. The placeholder
+ *      ships in the initial HTML; the real button hydrates after first
+ *      paint. With R1 in place, the lazy chunks here are now genuinely
+ *      deferred (R2 alone could not achieve this because the root layout
+ *      pinned them to every route's manifest).
  *
  * The placeholder uses `wallet-adapter-button wallet-adapter-button-trigger`
  * so the global overrides in `globals.css` (`!h-11`, `!bg-sight-500`,
@@ -21,8 +32,10 @@
  */
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useWalletAvailable } from "@/components/WalletAvailableContext";
 
-export const WalletButton = dynamic(
+const DynamicWalletMultiButton = dynamic(
   () =>
     import("@solana/wallet-adapter-react-ui").then((m) => m.WalletMultiButton),
   {
@@ -39,3 +52,24 @@ export const WalletButton = dynamic(
     ),
   }
 );
+
+export function WalletButton() {
+  const walletAvailable = useWalletAvailable();
+
+  if (!walletAvailable) {
+    // No `<WalletProvider>` in the tree → don't try to mount the modal.
+    // Send the user to `/dashboard`, which lives inside `(wallet)/` and has
+    // the provider, where the real "Select Wallet" UI is reachable.
+    return (
+      <Link
+        href="/dashboard"
+        className="wallet-adapter-button wallet-adapter-button-trigger"
+        aria-label="Connect wallet on dashboard"
+      >
+        Connect Wallet
+      </Link>
+    );
+  }
+
+  return <DynamicWalletMultiButton />;
+}

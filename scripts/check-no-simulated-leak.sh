@@ -3,12 +3,13 @@
 # CI guard — blocks `is_simulated` and admin-only stake fields from
 # leaking outside the admin perimeter.
 #
-# Layout (post-merge with kai68 base):
-#   src/app/admin/**        admin frontend
-#   supabase/functions/**   admin/cron edge functions
-#   src/lib/supabase/**     typed Supabase client (some types include
-#                           is_simulated — restricted to this file)
-#   anchor/**               Anchor program (on-chain truth)
+# Layout (post-merge with kai68 base, plus R1 route-group lift):
+#   src/app/(wallet)/admin/** admin frontend (R1 moved into (wallet) group;
+#                             URL is still /admin — Next.js strips parens)
+#   supabase/functions/**     admin/cron edge functions
+#   src/lib/supabase/**       typed Supabase client (some types include
+#                             is_simulated — restricted to this file)
+#   anchor/**                 Anchor program (on-chain truth)
 #
 # PRD v4 §4: simulated stakes must be indistinguishable from real ones
 # on every public surface. If this script exits non-zero, something
@@ -19,7 +20,7 @@
 
 set -euo pipefail
 
-ALLOWED_PATHS_REGEX='^(src/lib/supabase/types\.ts|src/lib/supabase/api\.ts|src/lib/supabase/admin-api\.ts|src/app/admin/|supabase/(migrations|functions)/|anchor/|MERGE-NOTES\.md|docs/MIGRATION-v8\.1-to-PRD-v4\.md|SECURITY\.md|scripts/check-no-simulated-leak\.sh|GAPS\.md)'
+ALLOWED_PATHS_REGEX='^(src/lib/supabase/types\.ts|src/lib/supabase/api\.ts|src/lib/supabase/admin-api\.ts|src/app/admin/|src/app/\(wallet\)/admin/|supabase/(migrations|functions)/|anchor/|MERGE-NOTES\.md|docs/MIGRATION-v8\.1-to-PRD-v4\.md|SECURITY\.md|scripts/check-no-simulated-leak\.sh|GAPS\.md)'
 
 # 1. Source-tree leak — `is_simulated` outside the admin perimeter.
 SOURCE_LEAKS=$(
@@ -51,7 +52,7 @@ fi
 if [ -d .next/static/chunks ]; then
   BAD_CHUNKS=$(
     grep -RlE 'is_simulated|simulated_slots' .next/static/chunks/ 2>/dev/null \
-    | grep -vE 'app/admin/' \
+    | grep -vE 'app/admin/|app/\(wallet\)/admin/' \
     || true
   )
   if [ -n "$BAD_CHUNKS" ]; then

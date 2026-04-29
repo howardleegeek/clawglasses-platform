@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { PRODUCTS, MOCK_STATS } from "@/lib/constants";
+// Import from `products` (not `constants`) so the homepage doesn't drag the
+// entire @solana/web3.js bundle into its First Load JS. R1, 2026-04-28.
+import { PRODUCTS, MOCK_STATS } from "@/lib/products";
 
 /* ── Hero ──────────────────────────────────────────── */
 function Hero() {
