@@ -85,6 +85,41 @@ export const metadata: Metadata = {
   },
 };
 
+// Schema.org JSON-LD. Two schemas:
+//   - Organization: company metadata for Knowledge Graph eligibility.
+//   - WebSite: property metadata. SearchAction omitted (no site search yet
+//     — Google penalizes broken sitelinks search box markup).
+//
+// Brand-independence iron law: sameAs lists only Clawglasses-owned handles.
+//
+// We render the JSON via React's <script>{string}</script> children pattern
+// (NOT dangerouslySetInnerHTML). The payload is JSON.stringify of a hardcoded
+// const, no user-input path → no XSS surface. JSON-LD never contains '<' or
+// '>' inside string values, so React's character escaping doesn't corrupt it.
+const ORG_JSON_LD = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: SITE_NAME,
+  url: SITE_URL,
+  logo: `${SITE_URL}${OG_IMAGE}`,
+  description: SITE_DESCRIPTION,
+  sameAs: ["https://twitter.com/ClawGlasses"],
+});
+
+const WEBSITE_JSON_LD = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: SITE_NAME,
+  url: SITE_URL,
+  description: SITE_DESCRIPTION,
+  inLanguage: "en-US",
+  publisher: {
+    "@type": "Organization",
+    name: SITE_NAME,
+    url: SITE_URL,
+  },
+});
+
 export default function RootLayout({
   children,
 }: {
@@ -93,6 +128,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={inter.className}>
+        {/* Two separate JSON-LD blocks so a parser failure on one doesn't
+            sink the other. Each is a hardcoded const stringified at build. */}
+        <script type="application/ld+json">{ORG_JSON_LD}</script>
+        <script type="application/ld+json">{WEBSITE_JSON_LD}</script>
         <WalletProvider>
           {/* Honest preview banner — visible everywhere. Honest about state, defuses
               "this is misrepresenting itself as production" framing. */}
